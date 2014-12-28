@@ -199,43 +199,69 @@ bool mp_chmap_sel_adjust(const struct mp_chmap_sel *s, struct mp_chmap *map)
     return false;
 }
 
+#define upmix_idx 0
+#define downmix_idx 1
+
+static bool test_fallbacks(struct mp_chmap *a, struct mp_chmap *b,
+                           int best_diffs[2], struct mp_chmap best[2])
+{
+    struct mp_chmap diff;
+
+    mp_chmap_diff(a, b, &diff);
+    if (mp_chmap_contains(a, b) && best_diffs[upmix_idx] > diff.num) {
+        best[upmix_idx] = *a;
+        best_diffs[upmix_idx] = diff.num;
+        return true;
+    }
+
+    mp_chmap_diff(b, a, &diff);
+    if (mp_chmap_contains(b, a) && best_diffs[downmix_idx] > diff.num) {
+        best[downmix_idx] = *a;
+        best_diffs[downmix_idx] = diff.num;
+        return true;
+    }
+
+    return false;
+}
+
 // Determine which channel map to use given a source channel map using a
 // fallback algorithm that prefers upmix
 bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
 {
-    int best_upmix_diff   = INT_MAX;
-    int best_downmix_diff = INT_MAX;
-    struct mp_chmap best_upmix;
-    struct mp_chmap best_downmix;
+    int best_diffs[] = { INT_MAX, INT_MAX }; // idx: 0 upmix, 1 downmix
+    struct mp_chmap best[] = { {0}, {0} };
 
     for (int n = 0; n < s->num_chmaps; n++) {
         struct mp_chmap e = s->chmaps[n];
-        struct mp_chmap diff;
 
-        mp_chmap_diff(&e, map, &diff);
-        if (mp_chmap_contains(&e, map) && best_upmix_diff > diff.num) {
-            best_upmix_diff = diff.num;
-            best_upmix = e;
-        }
+        if (test_fallbacks(&e, map, best_diffs, best))
+            continue;
 
-        mp_chmap_diff(map, &e, &diff);
-        if (mp_chmap_contains(map, &e) && best_downmix_diff > diff.num) {
-            best_downmix_diff = diff.num;
-            best_downmix = e;
+        for (int i = 0; i < MP_ARRAY_SIZE(speaker_replacements); i++) {
+            struct mp_chmap  t = e;
+            struct mp_chmap *r = (struct mp_chmap *)speaker_replacements[i];
+            if (replace_speakers(&t, r)) {
+                if (test_fallbacks(&t, map, best_diffs, best))
+                    continue;
+            }
         }
     }
 
-    if (best_upmix_diff < INT_MAX) {
-        *map = best_upmix;
+    if (best_diffs[upmix_idx] < INT_MAX) {
+        *map = best[upmix_idx];
         return true;
     }
 
-    if (best_downmix_diff < INT_MAX) {
-        *map = best_downmix;
+    if (best_diffs[downmix_idx] < INT_MAX) {
+        *map = best[downmix_idx];
         return true;
     }
+
     return false;
 }
+
+#undef upmix_idx
+#undef downmix_idx
 
 // Set map to a default layout with num channels. Used for audio APIs that
 // return a channel count as part of format negotiation, but give no

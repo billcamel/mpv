@@ -102,6 +102,19 @@ static void test_mp_chmap_sel_prefer_closest_upmix(void **state) {
     assert_string_equal(mp_chmap_to_str(&c), "5.1");
 }
 
+static void test_mp_chmap_sel_use_replacements(void **state) {
+    struct mp_chmap a;
+    struct mp_chmap b;
+    struct mp_chmap_sel s = {0};
+
+    mp_chmap_from_str(&a, bstr0("7.1(rear)"));
+    mp_chmap_from_str(&b, bstr0("5.1"));
+
+    mp_chmap_sel_add_map(&s, &a);
+    assert_true(mp_chmap_sel_fallback(&s, &b));
+    assert_string_equal(mp_chmap_to_str(&b), "7.1(rear)");
+}
+
 int main(void) {
     const UnitTest tests[] = {
         unit_test(test_mp_chmap_diff),
@@ -112,6 +125,7 @@ int main(void) {
         unit_test(test_mp_chmap_sel_downmix),
         unit_test(test_mp_chmap_sel_incompatible),
         unit_test(test_mp_chmap_sel_prefer_closest_upmix),
+        unit_test(test_mp_chmap_sel_use_replacements),
     };
     return run_tests(tests);
 }
