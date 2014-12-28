@@ -260,6 +260,13 @@ bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
         return true;
     }
 
+    struct mp_chmap mono   = MP_CHMAP_INIT_MONO;
+    struct mp_chmap stereo = MP_CHMAP_INIT_STEREO;
+    if (mp_chmap_equals(&mono, map) && test_layout(s, &stereo)) {
+        *map = stereo;
+        return true;
+    }
+
     return false;
 }
 
