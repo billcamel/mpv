@@ -99,6 +99,17 @@ void mp_chmap_sel_add_map(struct mp_chmap_sel *s, const struct mp_chmap *map)
     s->chmaps[s->num_chmaps++] = *map;
 }
 
+void mp_chmap_sel_add_preferred_map(struct mp_chmap_sel *s,
+                                    const struct mp_chmap *map)
+{
+    mp_chmap_sel_add_map(s, map);
+    if (s->num_chmaps > 0) {
+        struct mp_chmap *last = &s->chmaps[s->num_chmaps-1];
+        if (mp_chmap_equals(last, map))
+            s->preferred = last;
+    }
+}
+
 // Allow all waveext formats in default order.
 void mp_chmap_sel_add_waveext_def(struct mp_chmap_sel *s)
 {
@@ -234,6 +245,11 @@ bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
     struct mp_chmap stereo = MP_CHMAP_INIT_STEREO;
     if (mp_chmap_equals(&mono, map) && test_layout(s, &stereo)) {
         *map = stereo;
+        return true;
+    }
+
+    if (s->preferred && map->num > 2) {
+        *map = *s->preferred;
         return true;
     }
 

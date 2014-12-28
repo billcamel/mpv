@@ -86,6 +86,24 @@ static void test_mp_chmap_sel_incompatible(void **state) {
     assert_false(mp_chmap_sel_fallback(&s, &b));
 }
 
+static void test_mp_chmap_sel_incompatible_preferred(void **state) {
+    struct mp_chmap a, b, c;
+    struct mp_chmap_sel s = {0};
+
+    mp_chmap_from_str(&a, bstr0("7.1"));
+    mp_chmap_from_str(&b, bstr0("stereo"));
+    mp_chmap_from_str(&c, bstr0("7.1(wide-side)"));
+
+    mp_chmap_sel_add_preferred_map(&s, &a);
+    mp_chmap_sel_add_map(&s, &b);
+    assert_true(mp_chmap_sel_fallback(&s, &c));
+    assert_string_equal(mp_chmap_to_str(&c), "7.1");
+
+    mp_chmap_from_str(&c, bstr0("stereo"));
+    assert_true(mp_chmap_sel_fallback(&s, &c));
+    assert_string_equal(mp_chmap_to_str(&c), "stereo");
+}
+
 static void test_mp_chmap_sel_prefer_closest_upmix(void **state) {
     struct mp_chmap_sel s = {0};
 
@@ -169,6 +187,7 @@ int main(void) {
         unit_test(test_mp_chmap_sel_upmix),
         unit_test(test_mp_chmap_sel_downmix),
         unit_test(test_mp_chmap_sel_incompatible),
+        unit_test(test_mp_chmap_sel_incompatible_preferred),
         unit_test(test_mp_chmap_sel_prefer_closest_upmix),
         unit_test(test_mp_chmap_sel_use_replacements),
 

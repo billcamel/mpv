@@ -243,7 +243,7 @@ static bool init_chmap(struct ao *ao)
 
     AudioChannelLayout *ml = ca_query_layout(ao, ta_ctx);
     if (ml && ca_layout_to_mp_chmap(ao, ml, &chmap))
-        mp_chmap_sel_add_map(&chmap_sel, &chmap);
+        mp_chmap_sel_add_preferred_map(&chmap_sel, &chmap);
 
     AudioChannelLayout *sl = ca_query_stereo_layout(ao, ta_ctx);
     if (sl && ca_layout_to_mp_chmap(ao, sl, &chmap))
