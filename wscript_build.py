@@ -443,6 +443,15 @@ def build(ctx):
             wrapctx.env.CFLAGS = wrapflags
             wrapctx.env.LAST_LINKFLAGS = wrapflags
 
+    if ctx.dependency_satisfied('unit-tests'):
+        ctx(
+            target       = "test-suite",
+            source       = ctx.filtered_sources(sources) + ["tests/all.c"],
+            use          = ctx.dependencies_use(),
+            includes     = [ctx.bldnode.abspath(), ctx.srcnode.abspath()] + \
+                           ctx.dependencies_includes(),
+            features     = "c cprogram",
+        )
 
     build_shared = ctx.dependency_satisfied('libmpv-shared')
     build_static = ctx.dependency_satisfied('libmpv-static')

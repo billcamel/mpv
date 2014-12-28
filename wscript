@@ -84,6 +84,11 @@ build_options = [
         'desc': 'inline assembly (currently without effect)',
         'default': 'enable',
         'func': check_true,
+    }, {
+        'name': '--unit-tests',
+        'desc': 'unit tests (using cmocka)',
+        'default': 'disable',
+        'func': check_pkg_config('cmocka >= 0.4.1'),
     }
 ]
 

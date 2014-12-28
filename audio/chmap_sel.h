@@ -43,5 +43,6 @@ void mp_chmap_sel_add_speaker(struct mp_chmap_sel *s, int id);
 bool mp_chmap_sel_adjust(const struct mp_chmap_sel *s, struct mp_chmap *map);
 bool mp_chmap_sel_get_def(const struct mp_chmap_sel *s, struct mp_chmap *map,
                           int num);
+bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map);
 
 #endif

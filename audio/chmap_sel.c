@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "common/common.h"
 #include "chmap_sel.h"
@@ -183,6 +184,10 @@ bool mp_chmap_sel_adjust(const struct mp_chmap_sel *s, struct mp_chmap *map)
             return true;
         }
     }
+
+    if (mp_chmap_sel_fallback(s, map))
+        return true;
+
     // Fallback to mono/stereo as last resort
     *map = (struct mp_chmap) MP_CHMAP_INIT_STEREO;
     if (test_layout(s, map))
@@ -191,6 +196,44 @@ bool mp_chmap_sel_adjust(const struct mp_chmap_sel *s, struct mp_chmap *map)
     if (test_layout(s, map))
         return true;
     *map = (struct mp_chmap) {0};
+    return false;
+}
+
+// Determine which channel map to use given a source channel map using a
+// fallback algorithm that prefers upmix
+bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
+{
+    int best_upmix_diff   = INT_MAX;
+    int best_downmix_diff = INT_MAX;
+    struct mp_chmap best_upmix;
+    struct mp_chmap best_downmix;
+
+    for (int n = 0; n < s->num_chmaps; n++) {
+        struct mp_chmap e = s->chmaps[n];
+        struct mp_chmap diff;
+
+        mp_chmap_diff(&e, map, &diff);
+        if (mp_chmap_contains(&e, map) && best_upmix_diff > diff.num) {
+            best_upmix_diff = diff.num;
+            best_upmix = e;
+        }
+
+        mp_chmap_diff(map, &e, &diff);
+        if (mp_chmap_contains(map, &e) && best_downmix_diff > diff.num) {
+            best_downmix_diff = diff.num;
+            best_downmix = e;
+        }
+    }
+
+    if (best_upmix_diff < INT_MAX) {
+        *map = best_upmix;
+        return true;
+    }
+
+    if (best_downmix_diff < INT_MAX) {
+        *map = best_downmix;
+        return true;
+    }
     return false;
 }
 
