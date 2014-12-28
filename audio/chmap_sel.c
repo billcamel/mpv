@@ -228,6 +228,15 @@ static bool test_fallbacks(struct mp_chmap *a, struct mp_chmap *b,
 // fallback algorithm that prefers upmix
 bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
 {
+    // special case for mono - stereo since it's pretty common and mostly
+    // likely poorly configured
+    struct mp_chmap mono   = MP_CHMAP_INIT_MONO;
+    struct mp_chmap stereo = MP_CHMAP_INIT_STEREO;
+    if (mp_chmap_equals(&mono, map) && test_layout(s, &stereo)) {
+        *map = stereo;
+        return true;
+    }
+
     int best_diffs[] = { INT_MAX, INT_MAX }; // idx: 0 upmix, 1 downmix
     struct mp_chmap best[] = { {0}, {0} };
 
@@ -257,13 +266,6 @@ bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
 
     if (best_diffs[downmix_idx] < INT_MAX) {
         *map = best[downmix_idx];
-        return true;
-    }
-
-    struct mp_chmap mono   = MP_CHMAP_INIT_MONO;
-    struct mp_chmap stereo = MP_CHMAP_INIT_STEREO;
-    if (mp_chmap_equals(&mono, map) && test_layout(s, &stereo)) {
-        *map = stereo;
         return true;
     }
 
