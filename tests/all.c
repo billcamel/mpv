@@ -131,21 +131,17 @@ static void test_mp_chmap_sel_fallback_reject_unknown(void **state) {
     assert_string_equal(mp_chmap_to_str(&b), "5.1");
 }
 
-static void test_mp_chmap_sel_fallback_reject_non_lavc_chmaps(void **state) {
+static void test_mp_chmap_sel_fallback_works_on_alsa_chmaps(void **state) {
     struct mp_chmap a;
     struct mp_chmap b;
     struct mp_chmap_sel s = {0};
 
-    mp_chmap_from_str(&a, bstr0("7.1"));
-    int tmp = a.speaker[0];
-    a.speaker[0] = a.speaker[1];
-    a.speaker[1] = tmp;
-
+    mp_chmap_from_str(&a, bstr0("7.1(alsa)"));
     mp_chmap_from_str(&b, bstr0("5.1"));
 
     mp_chmap_sel_add_map(&s, &a);
-    assert_false(mp_chmap_sel_fallback(&s, &b));
-    assert_string_equal(mp_chmap_to_str(&b), "5.1");
+    assert_true(mp_chmap_sel_fallback(&s, &b));
+    assert_string_equal(mp_chmap_to_str(&b), "7.1(alsa)");
 }
 
 int main(void) {
@@ -161,7 +157,7 @@ int main(void) {
         unit_test(test_mp_chmap_sel_use_replacements),
 
         unit_test(test_mp_chmap_sel_fallback_reject_unknown),
-        unit_test(test_mp_chmap_sel_fallback_reject_non_lavc_chmaps),
+        unit_test(test_mp_chmap_sel_fallback_works_on_alsa_chmaps),
     };
     return run_tests(tests);
 }

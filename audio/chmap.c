@@ -378,8 +378,8 @@ void mp_chmap_get_reorder(int dst[MP_NUM_CHANNELS], const struct mp_chmap *from,
 void mp_chmap_diff(const struct mp_chmap *from, const struct mp_chmap *to,
                    struct mp_chmap *diff)
 {
-    uint64_t from_mask = mp_chmap_to_lavc(from);
-    uint64_t to_mask   = mp_chmap_to_lavc(to);
+    uint64_t from_mask = mp_chmap_to_lavc_unchecked(from);
+    uint64_t to_mask   = mp_chmap_to_lavc_unchecked(to);
     mp_chmap_from_lavc(diff, (from_mask ^ to_mask) & from_mask);
 }
 

@@ -234,7 +234,7 @@ bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
     for (int n = 0; n < s->num_chmaps; n++) {
         struct mp_chmap e = s->chmaps[n];
 
-        if (mp_chmap_is_unknown(&e) || !mp_chmap_is_lavc(&e))
+        if (mp_chmap_is_unknown(&e))
             continue;
 
         if (test_fallbacks(&e, map, best_diffs, best))
